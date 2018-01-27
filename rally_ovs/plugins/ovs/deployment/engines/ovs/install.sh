@@ -71,6 +71,15 @@ function install_ovs {
     sudo chown $OVS_USER /usr/local/var/log/openvswitch
 }
 
+function path_prepend {
+    case ":${PATH}:" in
+    *:"$1":*) ;;
+    *) PATH="$1${PATH:+:$PATH}" ;;
+    esac
+}
+
+path_prepend /usr/sbin
+path_prepend /usr/local/sbin
 
 if  ! is_ovs_installed || [ X$REPO_ACTION != X ] ; then
 

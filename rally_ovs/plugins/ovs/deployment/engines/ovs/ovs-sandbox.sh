@@ -17,6 +17,13 @@
 #set -e # exit on first error
 #set -x
 
+path_prepend() {
+    case ":${PATH}:" in
+    *:"$1":*) ;;
+    *) PATH="$1${PATH:+:$PATH}" ;;
+    esac
+}
+
 run() {
     (cd "$sandbox" && "$@") || exit 1
 }
@@ -51,6 +58,9 @@ stop=
 cleanup=
 cleanup_all=false
 graceful=false
+
+path_prepend /usr/sbin
+path_prepend /usr/local/sbin
 
 for option; do
     # This option-parsing mechanism borrowed from a Autoconf-generated

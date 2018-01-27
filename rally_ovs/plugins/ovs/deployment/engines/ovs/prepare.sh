@@ -4,6 +4,16 @@ set -e # exit on first error
 
 OVS_USER=$1
 
+function path_prepend {
+    case ":${PATH}:" in
+    *:"$1":*) ;;
+    *) PATH="$1${PATH:+:$PATH}" ;;
+    esac
+}
+
+path_prepend /usr/sbin
+path_prepend /usr/local/sbin
+
 echo "Prepare user $OVS_USER for ovs deployment"
 
 # Check for an existing user
