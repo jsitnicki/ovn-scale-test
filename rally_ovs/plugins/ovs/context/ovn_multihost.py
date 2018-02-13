@@ -93,6 +93,3 @@ class OvnMultihost(context.Context):
     @logging.log_task_wrapper(LOG.info, "Exit context: `ovn_multihost`")
     def cleanup(self):
         pass
-
-
-

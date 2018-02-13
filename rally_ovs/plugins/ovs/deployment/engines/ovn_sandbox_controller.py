@@ -139,7 +139,3 @@ class OvnSandboxControllerEngine(SandboxEngine):
                             raise_on_error=False)
 
             self.deployment.delete_resource(resource.id)
-
-
-
-

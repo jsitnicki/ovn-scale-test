@@ -390,8 +390,3 @@ class OvnScenario(scenario.OvsScenario):
 
         if wait_sync != "none":
             ovn_nbctl.sync(wait_sync)
-
-
-
-
-

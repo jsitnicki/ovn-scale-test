@@ -77,5 +77,3 @@ class Sandbox(context.Context):
 
     def cleanup(self):
         LOG.debug("Cleanup ovn sandbox context")
-
-

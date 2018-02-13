@@ -125,4 +125,3 @@ class OvnSandboxFarmEngine(SandboxEngine):
                     LOG.exception(e)
 
             self.deployment.delete_resource(resource.id)
-

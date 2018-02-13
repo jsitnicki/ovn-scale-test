@@ -48,4 +48,3 @@ class OvnNouthbound(context.Context):
     @logging.log_task_wrapper(LOG.info, "Exit context: `ovn_nb`")
     def cleanup(self):
         pass
-

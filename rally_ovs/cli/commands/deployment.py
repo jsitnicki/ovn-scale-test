@@ -177,5 +177,3 @@ class DeploymentCommands(object):
         except exceptions.DeploymentNotFound:
             print("Deployment %s is not found." % deployment)
             return 1
-
-
