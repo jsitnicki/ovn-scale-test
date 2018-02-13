@@ -13,7 +13,6 @@
 # under the License.
 
 import six
-from rally.common.i18n import _
 from rally.common import logging
 from rally import consts
 from rally.task import context
@@ -35,7 +34,7 @@ class OvnNouthbound(context.Context):
     DEFAULT_CONFIG = {
     }
 
-    @logging.log_task_wrapper(LOG.info, _("Enter context: `ovn_nb`"))
+    @logging.log_task_wrapper(LOG.info, "Enter context: `ovn_nb`")
     def setup(self):
 
         controller = self.context["ovn_multihost"]["controller"]
@@ -46,7 +45,7 @@ class OvnNouthbound(context.Context):
 
         self.context["ovn-nb"] = lswitches
 
-    @logging.log_task_wrapper(LOG.info, _("Exit context: `ovn_nb`"))
+    @logging.log_task_wrapper(LOG.info, "Exit context: `ovn_nb`")
     def cleanup(self):
         pass
 

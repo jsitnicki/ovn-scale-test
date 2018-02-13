@@ -29,7 +29,6 @@ from rally import api
 from rally.cli import cliutils
 from rally.cli import envutils
 from rally.common import fileutils
-from rally.common.i18n import _
 from rally.common import utils
 from rally.common import db
 from rally.common import objects
@@ -67,10 +66,10 @@ class DeploymentCommands(object):
         try:
             deployment = api.Deployment.create(config, name)
         except jsonschema.ValidationError:
-            print(_("Config schema validation error: %s.") % sys.exc_info()[1])
+            print("Config schema validation error: %s." % sys.exc_info()[1])
             return(1)
         except exceptions.DeploymentNameExists:
-            print(_("Error: %s") % sys.exc_info()[1])
+            print("Error: %s" % sys.exc_info()[1])
             return(1)
 
         self.list(deployment_list=[deployment])
@@ -135,9 +134,9 @@ class DeploymentCommands(object):
             cliutils.print_list(table_rows, headers,
                                 sortby_index=headers.index("created_at"))
         else:
-            print(_("There are no deployments. "
-                    "To create a new deployment, use:"
-                    "\nrally deployment create"))
+            print("There are no deployments. "
+                  "To create a new deployment, use:"
+                  "\nrally deployment create")
 
 
 

@@ -14,7 +14,6 @@
 
 
 import six
-from rally.common.i18n import _
 from rally.common import logging
 from rally.common import db
 from rally import consts
@@ -48,7 +47,7 @@ class Sandbox(context.Context):
     DEFAULT_CONFIG = {
     }
 
-    @logging.log_task_wrapper(LOG.info, _("Enter context: `sandbox`"))
+    @logging.log_task_wrapper(LOG.info, "Enter context: `sandbox`")
     def setup(self):
 
         LOG.debug("Setup ovn sandbox context")

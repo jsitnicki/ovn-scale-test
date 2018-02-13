@@ -116,7 +116,7 @@ class OvnScenario(scenario.OvsScenario):
         if network_cidr:
             end_ip = network_cidr.ip + lport_amount
             if not end_ip in network_cidr:
-                message = _("Network %s's size is not big enough for %d lports.")
+                message = "Network %s's size is not big enough for %d lports."
                 raise exceptions.InvalidConfigException(
                             message  % (network_cidr, lport_amount))
 
@@ -341,9 +341,9 @@ class OvnScenario(scenario.OvsScenario):
         # By default we wait for all HVs catching up with the change.
         wait_sync = port_bind_args.get("wait_sync", "hv")
         if wait_sync.lower() not in ['hv', 'sb', 'none']:
-            raise exceptions.InvalidConfigException(_(
+            raise exceptions.InvalidConfigException(
                 "Unknown value for wait_sync: %s. "
-                "Only 'hv', 'sb' and 'none' are allowed.") % wait_sync)
+                "Only 'hv', 'sb' and 'none' are allowed." % wait_sync)
 
         sandbox_num = len(sandboxes)
         lport_num = len(lports)

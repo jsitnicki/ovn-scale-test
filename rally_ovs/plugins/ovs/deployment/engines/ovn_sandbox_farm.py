@@ -16,7 +16,6 @@ import sys
 from six.moves.urllib import parse
 
 
-from rally.common.i18n import _
 from rally.common import logging
 from rally.deployment import engine # XXX: need a ovs one?
 from rally.deployment.serverprovider import provider
@@ -80,7 +79,7 @@ class OvnSandboxFarmEngine(SandboxEngine):
         super(OvnSandboxFarmEngine, self).validate()
 
 
-    @logging.log_deploy_wrapper(LOG.info, _("Deploy ovn sandbox farm"))
+    @logging.log_deploy_wrapper(LOG.info, "Deploy ovn sandbox farm")
     def deploy(self):
         self.servers = self.get_provider().create_servers()
 

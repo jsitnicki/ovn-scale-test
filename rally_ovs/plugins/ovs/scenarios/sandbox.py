@@ -136,7 +136,7 @@ class SandboxScenario(scenario.OvsScenario):
         sandbox_cidr = netaddr.IPNetwork(start_cidr)
         end_ip = sandbox_cidr.ip + amount
         if not end_ip in sandbox_cidr:
-            message = _("Network %s's size is not big enough for %d sandboxes.")
+            message = "Network %s's size is not big enough for %d sandboxes."
             raise exceptions.InvalidConfigException(
                         message  % (start_cidr, amount))
 
