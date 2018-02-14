@@ -140,8 +140,3 @@ class DdCtlMixin(object):
         args = [table, record]
         args += set_colval_args(*col_values)
         self.run("wait-until", args=args)
-
-
-
-
-
