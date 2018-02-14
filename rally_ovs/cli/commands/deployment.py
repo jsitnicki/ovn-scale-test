@@ -98,7 +98,7 @@ class DeploymentCommands(object):
                    help="UUID or name of the deployment.")
     @envutils.with_default_deployment()
     @plugins.ensure_plugins_are_loaded
-    def destroy(self, deployment=None):
+    def destroy(self, api, deployment=None):
         """Destroy existing deployment.
 
         This will delete all ovs sandboxes created during Rally deployment
@@ -107,13 +107,13 @@ class DeploymentCommands(object):
 
         :param deployment: UUID or name of the deployment
         """
-        dep = objects.Deployment.get(deployment)
+        dep = api.deployment.get(deployment=deployment)
         tasks = db.task_list(deployment=dep["uuid"])
         for task in tasks:
             api.Task.delete(task["uuid"], True)
 
 
-        api.deployment.destroy(deployment)
+        api.deployment.destroy(deployment=deployment)
 
 
 
