@@ -32,7 +32,6 @@ class OvnMultihostEngine(engine.Engine):
     """
     def __init__(self, *args, **kwargs):
         super(OvnMultihostEngine, self).__init__(*args, **kwargs)
-        self.config = self.deployment["config"]
         self.nodes = []
 
 
