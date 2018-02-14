@@ -19,11 +19,9 @@ import six
 from rally.common.plugin import plugin
 from utils import py_to_val
 
-_NAMESPACE = "ovs"
-
 
 def configure(name):
-    return plugin.configure(name, namespace=_NAMESPACE)
+    return plugin.configure(name)
 
 
 
@@ -34,8 +32,8 @@ class OvsClient(plugin.Plugin):
 
 
     @classmethod
-    def get(cls, name, namespace=_NAMESPACE):
-        return super(OvsClient, cls).get(name, namespace)
+    def get(cls, name):
+        return super(OvsClient, cls).get(name)
 
     @abc.abstractmethod
     def create_client(self, *args, **kwargs):

@@ -31,7 +31,7 @@ from rally_ovs.plugins.ovs.deployment.sandbox import SandboxEngine
 
 LOG = logging.getLogger(__name__)
 
-@engine.configure(name="OvnSandboxControllerEngine", namespace="ovs")
+@engine.configure(name="OvnSandboxControllerEngine")
 class OvnSandboxControllerEngine(SandboxEngine):
     """ Deploy ovn sandbox controller
 
