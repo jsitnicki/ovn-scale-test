@@ -20,12 +20,9 @@ from __future__ import print_function
 import sys
 
 from rally.cli import cliutils
-from rally.common import profile
 from rally_ovs.cli.commands import deployment
 from rally_ovs.cli.commands import task
 
-
-profile.profile = profile.PROFILE_OVS
 
 ovs_categories = {
     "deployment": deployment.DeploymentCommands,
