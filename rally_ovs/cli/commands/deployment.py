@@ -25,7 +25,6 @@ from six.moves.urllib import parse
 import yaml
 
 
-from rally import api
 from rally.cli import cliutils
 from rally.cli import envutils
 from rally.common import fileutils
@@ -48,7 +47,7 @@ class DeploymentCommands(object):
                    help="Don't set new deployment as default for"
                         " future operations.")
     @plugins.ensure_plugins_are_loaded
-    def create(self, name, filename, do_use=False):
+    def create(self, api, name, filename, do_use=False):
         """Create new deployment.
 
         This command will create a new deployment record in rally ovs
@@ -64,7 +63,7 @@ class DeploymentCommands(object):
             config = yaml.safe_load(deploy_file.read())
 
         try:
-            deployment = api.Deployment.create(config, name)
+            deployment = api.deployment.create(config, name)
         except jsonschema.ValidationError:
             print("Config schema validation error: %s." % sys.exc_info()[1])
             return(1)
@@ -83,7 +82,7 @@ class DeploymentCommands(object):
                    help="UUID or name of the deployment.")
     @envutils.with_default_deployment()
     @plugins.ensure_plugins_are_loaded
-    def recreate(self, deployment=None):
+    def recreate(self, api, deployment=None):
         """Destroy and create an existing deployment.
 
         Unlike 'deployment destroy', the deployment database record
@@ -91,7 +90,7 @@ class DeploymentCommands(object):
 
         :param deployment: UUID or name of the deployment
         """
-        api.Deployment.recreate(deployment)
+        api.deployment.recreate(deployment)
 
 
     @cliutils.args("--deployment", dest="deployment", type=str,
@@ -114,16 +113,16 @@ class DeploymentCommands(object):
             api.Task.delete(task["uuid"], True)
 
 
-        api.Deployment.destroy(deployment)
+        api.deployment.destroy(deployment)
 
 
 
-    def list(self, deployment_list=None):
+    def list(self, api, deployment_list=None):
         """List existing deployments."""
 
         headers = ["uuid", "created_at", "name", "status", "active"]
         current_deployment = envutils.get_global("RALLY_DEPLOYMENT")
-        deployment_list = deployment_list or api.Deployment.list()
+        deployment_list = deployment_list or api.deployment.list()
 
         table_rows = []
         if deployment_list:
@@ -153,7 +152,7 @@ class DeploymentCommands(object):
 
         :param deployment: UUID or name of the deployment
         """
-        deploy = api.Deployment.get(deployment)
+        deploy = api.deployment.get(deployment)
         result = deploy["config"]
         print(json.dumps(result, sort_keys=True, indent=4))
 
@@ -162,13 +161,13 @@ class DeploymentCommands(object):
     @cliutils.args("--deployment", dest="deployment", type=str,
                    metavar="<uuid>", required=False,
                    help="UUID or name of a deployment.")
-    def use(self, deployment):
+    def use(self, api, deployment):
         """Set active deployment.
 
         :param deployment: UUID or name of the deployment
         """
         try:
-            deployment = api.Deployment.get(deployment)
+            deployment = api.deployment.get(deployment)
             print("Using deployment: %s" % deployment["uuid"])
 
             fileutils.update_globals_file("RALLY_DEPLOYMENT",
