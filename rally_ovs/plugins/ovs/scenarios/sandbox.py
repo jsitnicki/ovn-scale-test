@@ -131,7 +131,8 @@ class SandboxScenario(scenario.OvsScenario):
         install_method = self.install_method
 
         if controller_ip == None:
-            raise exceptions.NoSuchConfigField(name="controller_ip")
+            raise exceptions.NotFoundException(
+                "Missing field '%s'" % "controller_ip")
 
         sandbox_cidr = netaddr.IPNetwork(start_cidr)
         end_ip = sandbox_cidr.ip + amount

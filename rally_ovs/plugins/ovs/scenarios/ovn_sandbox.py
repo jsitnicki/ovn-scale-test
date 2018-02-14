@@ -16,7 +16,7 @@ import six
 
 from rally.task import scenario
 from rally.common import db
-from rally.exceptions import NoSuchConfigField
+from rally import exceptions
 
 from rally_ovs.plugins.ovs.scenarios import sandbox
 from rally_ovs.plugins.ovs import utils
@@ -54,10 +54,12 @@ class OvnSandbox(sandbox.SandboxScenario):
         net_dev = controller_create_args.get("net_dev", net_dev)
 
         if controller_cidr == None:
-            raise NoSuchConfigField(name="controller_cidr")
+            raise exceptions.NotFoundException(
+                "Missing field '%s'" % "controller_cidr")
 
         if net_dev == None:
-            raise NoSuchConfigField(name="net_dev")
+            raise exceptions.NotFoundException(
+                "Missing field '%s'" % "net_dev")
 
         self._create_controller(deployment_name, controller_cidr, net_dev)
 
@@ -224,4 +226,3 @@ class OvnSandbox(sandbox.SandboxScenario):
         sandboxes = self._get_sandbox(farm, tag)
         self._stop_sandbox(sandboxes, graceful)
         self._start_sandbox(sandboxes)
-
