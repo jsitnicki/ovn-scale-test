@@ -73,5 +73,3 @@ class OvnMultihostEngine(engine.Engine):
         subdeploys.reverse() # destroy in reversed order
         for subdeploy in subdeploys:
             rally.api.Deployment.destroy(subdeploy["uuid"])
-
-
