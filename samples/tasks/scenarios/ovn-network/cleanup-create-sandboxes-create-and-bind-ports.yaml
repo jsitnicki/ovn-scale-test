@@ -1,0 +1,78 @@
+---
+  OvnSandbox.delete_sandbox:
+    -
+      args:
+        sandbox_delete_args:
+            farm: "ovn-farm-node-0"
+            tag: "ToR1"
+            graceful: True
+      runner:
+        type: "serial"
+        # XXX: Can't use Rally runner for repeats, delete_sandbox removes all sandboxes at once.
+        times: 1
+      context:
+        ovn_multihost:
+          controller: "ovn-controller-node"
+
+  # Ensure there are no left-over chassis from any previous runs or chaos will ensue
+  OvnSouthbound.cleanup_chassis:
+    -
+      runner:
+        type: "serial"
+        times: 1
+      context:
+        ovn_sb: {}
+        ovn_multihost:
+          controller: "ovn-controller-node"
+
+  OvnNorthbound.cleanup_lswitches:
+    -
+      runner:
+        type: "serial"
+        times: 1
+      context:
+        ovn_nb: {}
+        ovn_multihost:
+          controller: "ovn-controller-node"
+          
+  OvnSandbox.create_sandbox:
+    -
+      args:
+        sandbox_create_args:
+          farm: "ovn-farm-node-0"
+          amount: 5
+          batch: 5
+          start_cidr: "192.168.33.10/24"
+          net_dev: "eth1"
+          tag: "ToR1"
+      runner:
+        type: "serial"
+        # XXX: Can't use runner for repeats, create_sandbox will use the same IP every time.
+        times: 1
+      context:
+        ovn_multihost:
+          controller: "ovn-controller-node"
+
+  OvnNetwork.create_and_bind_ports:
+    -
+      args:
+        network_create_args:
+          amount: 5
+          batch: 5
+          # XXX: First port will be 172.16.1.0, which is not what we want.
+          start_cidr: "172.16.1.1/24"
+        ports_per_network: 10
+        port_create_args:
+          batch: 10
+        port_bind_args:
+          wait_up: True
+      runner:
+        type: "serial"
+        # XXX: Can't use runner for repeats, task will use the same IP every time.
+        times: 1
+      context:
+        sandbox:
+          tag: "ToR1"
+        ovn_multihost:
+          controller: "ovn-controller-node"
+          
