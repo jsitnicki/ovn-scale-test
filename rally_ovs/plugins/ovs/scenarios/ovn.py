@@ -335,6 +335,7 @@ class OvnScenario(scenario.OvsScenario):
 
     @atomic.action_timer("ovn_network.bind_port")
     def _bind_ports(self, lports, sandboxes, port_bind_args):
+        LOG.info("Bind ports: lports=%d, sandboxes=%d" % (len(lports), len(sandboxes)))
         port_bind_args = port_bind_args or {}
         wait_up = port_bind_args.get("wait_up", False)
         # "wait_sync" takes effect only if wait_up is True.
@@ -412,6 +413,12 @@ class OvnScenario(scenario.OvsScenario):
             ovn_nbctl.sync(wait_sync)
 
 
+    @atomic.action_timer("ovn.delete_chassis")
+    def _delete_chassis(self, chassis):
+        ovn_sbctl = self.controller_client("ovn-sbctl")
+        ovn_sbctl.set_sandbox("controller-sandbox")
+        ovn_sbctl.enable_batch_mode()
+        for c in chassis:
+            ovn_sbctl.chassis_del(c["name"])
 
-
-
+        ovn_sbctl.flush()
