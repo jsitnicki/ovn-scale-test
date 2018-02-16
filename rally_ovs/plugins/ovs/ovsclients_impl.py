@@ -1,4 +1,5 @@
 # Copyright 2016 Ebay Inc.
+# Copyright 2018 Red Hat, Inc.
 #
 # Licensed under the Apache License, Version 2.0 (the "License"); you may
 # not use this file except in compliance with the License. You may obtain
@@ -193,6 +194,7 @@ class OvnNbctl(OvsClient):
             stdout = StringIO()
             self.run("show", args=params, stdout=stdout)
             output = stdout.getvalue()
+            print('XXX ovn-nbctl show: %s' % output)
 
             return get_lswitch_info(output)
 
@@ -215,7 +217,102 @@ class OvnNbctl(OvsClient):
         return client
 
 
+@configure("ovn-sbctl")
+class OvnSbctl(OvsClient):
 
+    class _OvnSbctl(DdCtlMixin):
+        def __init__(self, credential):
+            self.ssh = get_ssh_from_credential(credential)
+            self.context = {}
+            self.sandbox = None
+            self.batch_mode = False
+            self.cmds = None
+
+        def enable_batch_mode(self, value=True):
+            self.batch_mode = bool(value)
+
+        def set_sandbox(self, sandbox, install_method="sandbox"):
+            self.sandbox = sandbox
+            self.install_method = install_method
+
+        def run(self, cmd, opts=[], args=[], stdout=sys.stdout, stderr=sys.stderr):
+            self.cmds = self.cmds or []
+
+            if self.batch_mode:
+                cmd = itertools.chain([" -- "], opts, [cmd], args)
+                self.cmds.append(" ".join(cmd))
+                return
+
+            if self.sandbox:
+                cmd_prefix = []
+                if self.install_method == "sandbox":
+                    self.cmds.append(". %s/sandbox.rc" % self.sandbox)
+                elif self.install_method == "docker":
+                    cmd_prefix = ["sudo docker exec ovn-south-database"]
+
+                cmd = itertools.chain(cmd_prefix, ["ovn-sbctl"], opts, [cmd], args)
+                self.cmds.append(" ".join(cmd))
+
+            self.ssh.run("\n".join(self.cmds),
+                         stdout=stdout, stderr=stderr)
+
+            self.cmds = None
+
+
+        def flush(self):
+            if self.cmds == None or len(self.cmds) == 0:
+                return
+
+            run_cmds = []
+            if self.sandbox:
+                if self.install_method == "sandbox":
+                    run_cmds.append(". %s/sandbox.rc" % self.sandbox)
+                    run_cmds.append("ovn-sbctl" + " ".join(self.cmds))
+                elif self.install_method == "docker":
+                    run_cmds.append("sudo docker exec ovn-south-database ovn-sbctl " + " ".join(self.cmds))
+
+            self.ssh.run("\n".join(run_cmds),
+                         stdout=sys.stdout, stderr=sys.stderr)
+
+            self.cmds = None
+
+
+        def db_set(self, table, record, *col_values):
+            args = [table, record]
+            args += set_colval_args(*col_values)
+            self.run("set", args=args)
+
+
+        def chassis_list(self):
+            '''
+            $ ovn-sbctl --format=csv --data=bare --no-headings --columns=name list Chassis
+            7b526e48-1e52-44be-a029-9d80f2d650b8
+            2d291060-d9b1-4ba3-b8fd-2661a35e5ffb
+            c0914e50-5e55-428c-a3b9-9b36e02881a0
+            '''
+            stdout = StringIO()
+            self.run("--format=csv --data=bare --no-headings --columns=name list Chassis", stdout=stdout)
+            output = stdout.getvalue()
+
+            chassis = []
+            for line in output.splitlines():
+                name = line.strip()
+                chassis.append({"name": name})
+
+            return chassis
+
+
+        def chassis_del(self, name):
+            params = [name]
+            self.run("chassis-del", args=params)
+
+
+    def create_client(self):
+        print "*********   call OvnSbctl.create_client"
+
+        client = self._OvnSbctl(self.credential)
+
+        return client
 
 
 @configure("ovs-vsctl")
