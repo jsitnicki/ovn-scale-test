@@ -23,7 +23,7 @@ LOG = logging.getLogger(__name__)
 
 
 @context.configure(name="ovn_sb", order=120)
-class OvnSouthbound(context.Context):
+class OvnSouthboundContext(context.Context):
     CONFIG_SCHEMA = {
         "type": "object",
         "$schema": consts.JSON_SCHEMA,
