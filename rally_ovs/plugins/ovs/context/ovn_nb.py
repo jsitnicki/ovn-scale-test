@@ -51,5 +51,12 @@ class OvnNouthbound(context.Context):
 
     @logging.log_task_wrapper(LOG.info, _("Exit context: `ovn_nb`"))
     def cleanup(self):
-        pass
+        ovn_nbctl = self.controller_client("ovn-nbctl")
+        ovn_nbctl.set_sandbox("controller-sandbox")
 
+        lswitches = ovn_nbctl.show()
+        ovn_nbctl.enable_batch_mode()
+        for lswitch in lswitches:
+            LOG.info("Deleting lswitch \"%s\"" % lswitch["name"])
+            ovn_nbctl.lswitch_del(lswitch["name"])
+        ovn_nbctl.flush()
