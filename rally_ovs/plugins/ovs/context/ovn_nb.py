@@ -35,12 +35,15 @@ class OvnNouthbound(context.Context):
     DEFAULT_CONFIG = {
     }
 
-    @logging.log_task_wrapper(LOG.info, _("Enter context: `ovn_nb`"))
-    def setup(self):
-
+    def controller_client(self, client_type):
         controller = self.context["ovn_multihost"]["controller"]
         info = six.next(six.itervalues(controller))
-        ovn_nbctl = getattr(ovs.ovsclients.Clients(info["credential"]), "ovn-nbctl")()
+        client = getattr(ovs.ovsclients.Clients(info["credential"]), client_type)
+        return client()
+
+    @logging.log_task_wrapper(LOG.info, _("Enter context: `ovn_nb`"))
+    def setup(self):
+        ovn_nbctl = self.controller_client("ovn-nbctl")
         ovn_nbctl.set_sandbox("controller-sandbox")
         lswitches = ovn_nbctl.show()
 
