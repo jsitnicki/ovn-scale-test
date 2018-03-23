@@ -44,6 +44,10 @@ class OvsScenario(scenario.Scenario):
         self.install_method = multihost_info["install_method"]
 
 
+    def __del__(self):
+        self.cleanup_clients()
+
+
     def controller_client(self, client_type="ssh"):
         client = getattr(self._controller_clients, client_type)
         return client()
