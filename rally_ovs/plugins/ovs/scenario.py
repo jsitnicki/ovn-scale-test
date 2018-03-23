@@ -55,12 +55,7 @@ class OvsScenario(scenario.Scenario):
         return client()
 
 
-
-
-
-
-
-
-
-
-
+    def cleanup_clients(self):
+        self._controller_clients.clear()
+        for _, clients in six.iteritems(self._farm_clients):
+            clients.clear()
