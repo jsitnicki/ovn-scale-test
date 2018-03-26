@@ -113,5 +113,3 @@ class OvnNetwork(ovn.OvnScenario):
 
     def bind_and_unbind_ports(self):
         pass
-
-
