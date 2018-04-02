@@ -16,50 +16,11 @@
 import six
 
 from rally.task import scenario
-
-
 from rally_ovs.plugins.ovs import ovsclients
-from rally_ovs.plugins.ovs.consts import ResourceType
-from rally_ovs.plugins.ovs.utils import *
 
 
-class OvsScenario(scenario.Scenario):
+class OvsScenario(ovsclients.ClientsMixin, scenario.Scenario):
     """Base class for all OVS scenarios."""
-
 
     def __init__(self, context=None):
         super(OvsScenario, self).__init__(context)
-
-        multihost_info = context["ovn_multihost"]
-
-        for k,v in six.iteritems(multihost_info["controller"]):
-            cred = v["credential"]
-            self._controller_clients = ovsclients.Clients(cred)
-
-        self._farm_clients = {}
-        for k,v in six.iteritems(multihost_info["farms"]):
-            cred = v["credential"]
-            self._farm_clients[k] = ovsclients.Clients(cred)
-
-        self.install_method = multihost_info["install_method"]
-
-
-    def __del__(self):
-        self.cleanup_clients()
-
-
-    def controller_client(self, client_type="ssh"):
-        client = getattr(self._controller_clients, client_type)
-        return client()
-
-
-    def farm_clients(self, name, client_type="ssh"):
-        clients = self._farm_clients[name]
-        client = getattr(clients, client_type)
-        return client()
-
-
-    def cleanup_clients(self):
-        self._controller_clients.clear()
-        for _, clients in six.iteritems(self._farm_clients):
-            clients.clear()
