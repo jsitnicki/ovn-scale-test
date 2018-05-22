@@ -191,8 +191,12 @@ class OvnNbctl(OvsClient):
             self.run("acl-list", args=params)
 
 
-        def acl_del(self, lswitch):
+        def acl_del(self, lswitch, direction=None, match=None):
             params = [lswitch]
+            if direction:
+                params.append(direction)
+            if match:
+                params.append(match)
             self.run("acl-del", args=params)
 
         def show(self, lswitch=None):

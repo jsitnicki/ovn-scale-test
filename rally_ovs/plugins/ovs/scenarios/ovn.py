@@ -194,15 +194,19 @@ class OvnScenario(ovnclients.OvnClientMixin, scenario.OvsScenario):
 
     @atomic.action_timer("ovn.delete_acl")
     def _delete_acl(self, lswitches):
-        LOG.info("delete ACLs")
-
         ovn_nbctl = self.controller_client("ovn-nbctl")
         ovn_nbctl.set_sandbox("controller-sandbox")
         ovn_nbctl.enable_batch_mode(True)
         for lswitch in lswitches:
-            LOG.info("delete ACLs on lswitch %s" % lswitch["name"])
-            ovn_nbctl.acl_del(lswitch["name"])
+            self._delete_single_acl(lswitch)
+        ovn_nbctl.flush()
 
+    def _delete_single_acl(self, lswitch, direction=None,
+                           match=None):
+        ovn_nbctl = self.controller_client("ovn-nbctl")
+        ovn_nbctl.set_sandbox("controller-sandbox")
+        LOG.info("delete ACLs on lswitch %s" % lswitch["name"])
+        ovn_nbctl.acl_del(lswitch["name"], direction, match)
         ovn_nbctl.flush()
 
 
