@@ -13,6 +13,8 @@
 # under the License.
 
 import netaddr
+import random
+import re
 
 from rally_ovs.plugins.ovs.scenarios import ovn
 
@@ -65,6 +67,33 @@ class OvnNorthbound(ovn.OvnScenario):
         self.create_lport_acl_addrset(lswitch, lport_create_args,
                                       ip_start_index, addr_set_index,
                                       (iteration % 2) == 0)
+
+    @scenario.configure()
+    def add_remove_routed_lport(self, test_args, lport_create_args = None,
+                                port_bind_args = None):
+        naddress_set = test_args.get("naddres", 10)
+
+        iteration = self.context["iteration"]
+        lswitches = self.context["ovn-nb"]
+
+        addr_set_index = iteration % naddress_set
+
+        if random.randint(0, 1):
+            #add a port
+            lswitch = lswitches[iteration % len(lswitches)]
+            ip_start_index = (iteration + 2 * naddress_set) / len(lswitches) + 1
+            LOG.info("adding port to %s" % lswitch["name"])
+            self.create_lport_acl_addrset(lswitch, lport_create_args,
+                                          ip_start_index, addr_set_index,
+                                          False)
+        else:
+            addr_set = self._get_address_set("addrset%d" % addr_set_index)
+            # get first ip of the address set
+            ip_addr = re.sub('\[|\]|\"|\\n', '', addr_set).split(",")[0]
+            self._address_set_remove_addrs("addrset%d" % addr_set_index, ip_addr)
+            lport = { "name": "lport_%s" % ip_addr }
+            LOG.info("removing port %s" % lport["name"])
+            self._delete_lport([lport])
 
     @scenario.configure(context={})
     def create_and_list_lswitches(self, lswitch_create_args=None):
