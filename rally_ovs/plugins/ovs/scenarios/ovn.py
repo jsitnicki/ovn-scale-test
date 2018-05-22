@@ -15,6 +15,7 @@
 from rally_ovs.plugins.ovs import scenario
 from rally.task import atomic
 from rally.common import logging
+from rally.common import utils as rutils
 from rally import exceptions
 from rally_ovs.plugins.ovs import ovnclients
 from rally_ovs.plugins.ovs import utils
@@ -321,11 +322,19 @@ class OvnScenario(ovnclients.OvnClientMixin, scenario.OvsScenario):
         ovn_nbctl.set_sandbox("controller-sandbox", install_method)
         ovn_nbctl.enable_batch_mode(True)
 
-        for lport in lports:
-            ovn_nbctl.wait_until('Logical_Switch_Port', lport["name"], ('up', 'true'))
+        with rutils.Timer() as t_wait:
+            for lport in lports:
+                ovn_nbctl.wait_until('Logical_Switch_Port', lport["name"], ('up', 'true'))
 
-        if wait_sync != "none":
-            ovn_nbctl.sync(wait_sync)
+        with rutils.Timer() as t_sync:
+            if wait_sync != "none":
+                ovn_nbctl.sync(wait_sync)
+
+        self.add_output(additive={"title": "wait_port_up latency",
+                                  "description": "wait_port_up latency",
+                                  "chart_plugin": "StackedArea",
+                                  "data": [["wait", t_wait.duration()],
+                                           ["sync", t_sync.duration()]]})
 
     @atomic.action_timer("ovn_network.list_oflow_count_for_sandboxes")
     def _list_oflow_count_for_sandboxes(self, sandboxes,
