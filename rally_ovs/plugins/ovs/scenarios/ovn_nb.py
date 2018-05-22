@@ -25,8 +25,8 @@ class OvnNorthbound(ovn.OvnScenario):
     """Benchmark scenarios for OVN northbound."""
 
     def create_lport_acl_addrset(self, lswitch, lport_create_args,
-                                 ip_start_index = 0, addr_set_index = 0,
-                                 create_addr_set = True):
+                                 port_bind_args, ip_start_index = 0,
+                                 addr_set_index = 0, create_addr_set = True):
         iteration = self.context["iteration"]
 
         lports = self._create_lports(lswitch, lport_create_args,
@@ -65,8 +65,8 @@ class OvnNorthbound(ovn.OvnScenario):
         ip_start_index = iteration / len(lswitches) + 1
 
         self.create_lport_acl_addrset(lswitch, lport_create_args,
-                                      ip_start_index, addr_set_index,
-                                      (iteration % 2) == 0)
+                                      port_bind_args, ip_start_index,
+                                      addr_set_index, (iteration % 2) == 0)
 
     @scenario.configure()
     def add_remove_routed_lport(self, test_args, lport_create_args = None,
@@ -85,8 +85,8 @@ class OvnNorthbound(ovn.OvnScenario):
             ip_start_index = (iteration + 2 * naddress_set) / len(lswitches) + 1
             LOG.info("adding port to %s" % lswitch["name"])
             self.create_lport_acl_addrset(lswitch, lport_create_args,
-                                          ip_start_index, addr_set_index,
-                                          False)
+                                          port_bind_args, ip_start_index,
+                                          addr_set_index, False)
         else:
             addr_set = self._get_address_set("addrset%d" % addr_set_index)
             # get first ip of the address set
