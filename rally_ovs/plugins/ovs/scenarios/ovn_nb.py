@@ -47,18 +47,24 @@ class OvnNorthbound(ovn.OvnScenario):
 
     def create_lport_acl_addrset(self, lswitch, lport_create_args, port_bind_args,
                                  ip_start_index = 0, addr_set_index = 0,
-                                 create_addr_set = True):
+                                 create_addr_set = True, create_acls = True):
         iteration = self.context["iteration"]
 
         lports = self._create_lports(lswitch, lport_create_args,
                                      lport_ip_shift = ip_start_index)
-        network_cidr = lswitch.get("cidr", None)
-        if network_cidr:
-            ip_list = netaddr.IPNetwork(network_cidr.ip + ip_start_index).iter_hosts()
-            self.create_or_update_address_set("addrset%d" % addr_set_index,
-                                              str(ip_list.next()), create_addr_set)
 
-        self.create_port_acls(lswitch, lports, "addrset%d" % addr_set_index)
+        if create_acls:
+            network_cidr = lswitch.get("cidr", None)
+            if network_cidr:
+                ip_list = netaddr.IPNetwork(network_cidr.ip + ip_start_index).iter_hosts()
+                ipaddr = str(ip_list.next())
+            else:
+                ipaddr = ""
+            self.create_or_update_address_set("addrset%d" % addr_set_index,
+                                              ipaddr, create_addr_set)
+
+            self.create_port_acls(lswitch, lports,
+                                  "addrset%d" % addr_set_index)
         
         sandboxes = self.context["sandboxes"]
         self._bind_ports(lports, sandboxes, port_bind_args)
