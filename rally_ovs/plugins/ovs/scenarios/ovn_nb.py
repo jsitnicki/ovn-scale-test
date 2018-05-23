@@ -32,6 +32,19 @@ class OvnNorthbound(ovn.OvnScenario):
         else:
             self._address_set_add_addrs(name, ipaddr)
 
+    @atomic.action_timer("ovn.create_port_acls")
+    def create_port_acls(self, lswitch, lports, addr_set):
+        """
+        create two acl for each logical port
+        prio 1000: allow inter project traffic
+        prio 900: deny all
+        """
+        match = "%(direction)s == %(lport)s && ip4.src == %(address_set)s"
+        acl_create_args = { "match" : match, "address_set" : addr_set }
+        self._create_acl(lswitch, lports, acl_create_args, 1)
+        acl_create_args = { "priority" : 900, "action" : "drop", "match" : "%(direction)s == %(lport)s" }
+        self._create_acl(lswitch, lports, acl_create_args, 1)
+
     def create_lport_acl_addrset(self, lswitch, lport_create_args, port_bind_args,
                                  ip_start_index = 0, addr_set_index = 0,
                                  create_addr_set = True):
@@ -39,22 +52,13 @@ class OvnNorthbound(ovn.OvnScenario):
 
         lports = self._create_lports(lswitch, lport_create_args,
                                      lport_ip_shift = ip_start_index)
-        """
-        create two acl for each logical port
-        prio 1000: allow inter project traffic
-        prio 900: deny all
-        """
-        match = "%(direction)s == %(lport)s && ip4.src == %(address_set)s"
         network_cidr = lswitch.get("cidr", None)
         if network_cidr:
             ip_list = netaddr.IPNetwork(network_cidr.ip + ip_start_index).iter_hosts()
             self.create_or_update_address_set("addrset%d" % addr_set_index,
                                               str(ip_list.next()), create_addr_set)
 
-        acl_create_args = { "match" : match, "address_set" : ("$addrset%d" % addr_set_index) }
-        self._create_acl(lswitch, lports, acl_create_args, 1)
-        acl_create_args = { "priority" : 900, "action" : "drop", "match" : "%(direction)s == %(lport)s" }
-        self._create_acl(lswitch, lports, acl_create_args, 1)
+        self.create_port_acls(lswitch, lports, "addrset%d" % addr_set_index)
         
         sandboxes = self.context["sandboxes"]
         self._bind_ports(lports, sandboxes, port_bind_args)
