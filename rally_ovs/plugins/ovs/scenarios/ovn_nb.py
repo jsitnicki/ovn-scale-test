@@ -19,14 +19,22 @@ import re
 from rally_ovs.plugins.ovs.scenarios import ovn
 
 from rally.task import scenario
+from rally.task import atomic
 from rally.task import validation
 
 class OvnNorthbound(ovn.OvnScenario):
     """Benchmark scenarios for OVN northbound."""
 
-    def create_lport_acl_addrset(self, lswitch, lport_create_args,
-                                 port_bind_args, ip_start_index = 0,
-                                 addr_set_index = 0, create_addr_set = True):
+    @atomic.action_timer("ovn.create_or_update_address_set")
+    def create_or_update_address_set(self, name, ipaddr, create = True):
+        if (create):
+            self._create_address_set(name, ipaddr)
+        else:
+            self._address_set_add_addrs(name, ipaddr)
+
+    def create_lport_acl_addrset(self, lswitch, lport_create_args, port_bind_args,
+                                 ip_start_index = 0, addr_set_index = 0,
+                                 create_addr_set = True):
         iteration = self.context["iteration"]
 
         lports = self._create_lports(lswitch, lport_create_args,
@@ -40,12 +48,8 @@ class OvnNorthbound(ovn.OvnScenario):
         network_cidr = lswitch.get("cidr", None)
         if network_cidr:
             ip_list = netaddr.IPNetwork(network_cidr.ip + ip_start_index).iter_hosts()
-            if (create_addr_set):
-                self._create_address_set("addrset%d" % addr_set_index,
-                                         "%s" % str(ip_list.next()))
-            else:
-                self._address_set_add_addrs("addrset%d" % addr_set_index,
-                                            "%s" % str(ip_list.next()))
+            self.create_or_update_address_set("addrset%d" % addr_set_index,
+                                              str(ip_list.next()), create_addr_set)
 
         acl_create_args = { "match" : match, "address_set" : ("$addrset%d" % addr_set_index) }
         self._create_acl(lswitch, lports, acl_create_args, 1)
