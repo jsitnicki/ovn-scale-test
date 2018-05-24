@@ -109,15 +109,15 @@ class OvnNorthbound(ovn.OvnScenario):
             cidr.prefixlen = prefix_len
 
             lport = { "name": "lport_%s" % ip_addr }
-            lswicth = { "name" : "lswitch_%s" % cidr.cidr }
-            LOG.info("removing port %s from %s lswicth" % (lport["name"], lswicth["name"]))
+            lswitch = { "name" : "lswitch_%s" % cidr.cidr }
+            LOG.info("removing port %s from %s lswitch" % (lport["name"], lswitch["name"]))
 
             self._address_set_remove_addrs("addrset%d" % addr_set_index, ip_addr)
             self._delete_lport([lport])
             match = "'outport == %s && ip4.src == $addrset%d'" % (lport["name"], addr_set_index)
-            self._delete_single_acl(lswicth, "to-lport", "1000 %s" % match)
+            self._delete_single_acl(lswitch, "to-lport", "1000 %s" % match)
             match = "'outport == %s'" % lport["name"]
-            self._delete_single_acl(lswicth, "to-lport", "900 %s" % match)
+            self._delete_single_acl(lswitch, "to-lport", "900 %s" % match)
 
     @scenario.configure(context={})
     def create_and_list_lswitches(self, lswitch_create_args=None):
