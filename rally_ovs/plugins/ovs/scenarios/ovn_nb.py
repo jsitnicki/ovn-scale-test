@@ -64,7 +64,7 @@ class OvnNorthbound(ovn.OvnScenario):
                                               ipaddr, create_addr_set)
 
             self.create_port_acls(lswitch, lports,
-                                  "addrset%d" % addr_set_index)
+                                  "$addrset%d" % addr_set_index)
         
         sandboxes = self.context["sandboxes"]
         self._bind_ports(lports, sandboxes, port_bind_args)
