@@ -94,7 +94,7 @@ class OvnNorthbound(ovn.OvnScenario):
     @scenario.configure()
     def add_remove_routed_lport(self, test_args, lport_create_args = None,
                                 port_bind_args = None, create_acls = True):
-        naddress_set = test_args.get("naddres", 10)
+        naddress_set = test_args.get("naddress", 10)
         prefix_len = test_args.get("prefixlen", 24)
 
         iteration = self.context["iteration"]
