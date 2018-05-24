@@ -82,6 +82,13 @@ class OvnNorthbound(ovn.OvnScenario):
                                       port_bind_args, ip_start_index,
                                       addr_set_index, (iteration % 2) == 0)
 
+    @atomic.action_timer("ovn.delete_port_acls")
+    def delete_port_acls(self, lswitch, lport, addr_set_index):
+            match = "'outport == %s && ip4.src == $addrset%d'" % (lport["name"], addr_set_index)
+            self._delete_single_acl(lswitch, "to-lport", "1000 %s" % match)
+            match = "'outport == %s'" % lport["name"]
+            self._delete_single_acl(lswitch, "to-lport", "900 %s" % match)
+
     @scenario.configure()
     def add_remove_routed_lport(self, test_args, lport_create_args = None,
                                 port_bind_args = None):
@@ -113,11 +120,8 @@ class OvnNorthbound(ovn.OvnScenario):
             LOG.info("removing port %s from %s lswitch" % (lport["name"], lswitch["name"]))
 
             self._address_set_remove_addrs("addrset%d" % addr_set_index, ip_addr)
+            self.delete_port_acls(lswitch, lport, addr_set_index)
             self._delete_lport([lport])
-            match = "'outport == %s && ip4.src == $addrset%d'" % (lport["name"], addr_set_index)
-            self._delete_single_acl(lswitch, "to-lport", "1000 %s" % match)
-            match = "'outport == %s'" % lport["name"]
-            self._delete_single_acl(lswitch, "to-lport", "900 %s" % match)
 
     @scenario.configure(context={})
     def create_and_list_lswitches(self, lswitch_create_args=None):
