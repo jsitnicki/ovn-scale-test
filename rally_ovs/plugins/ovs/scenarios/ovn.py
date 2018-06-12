@@ -67,8 +67,9 @@ class OvnScenario(ovnclients.OvnClientMixin, scenario.OvsScenario):
         self.RESOURCE_NAME_FORMAT = "lport_XXXXXX_XXXXXX"
 
         batch = lport_create_args.get("batch", lport_amount)
+        port_security = lport_create_args.get("port_security", True)
 
-        LOG.info("Create lports method: %s" % self.install_method)
+        LOG.info("Create lports method: %s, security: %s" % (self.install_method, port_security))
         install_method = self.install_method
 
         network_cidr = lswitch.get("cidr", None)
@@ -104,7 +105,8 @@ class OvnScenario(ovnclients.OvnClientMixin, scenario.OvsScenario):
             lport = ovn_nbctl.lswitch_port_add(lswitch["name"], name)
 
             ovn_nbctl.lport_set_addresses(name, [mac, ip])
-            ovn_nbctl.lport_set_port_security(name, mac)
+            if port_security:
+                ovn_nbctl.lport_set_port_security(name, mac)
 
             lports.append(lport)
 
