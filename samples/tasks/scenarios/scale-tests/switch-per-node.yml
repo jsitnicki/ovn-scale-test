@@ -103,10 +103,6 @@
             max_seconds_per_iteration: {{sla_max_seconds}}
             failure_rate:
               max: {{sla_max_failure_rate}}
-            outliers:
-              max: {{sla_max_failure}}
-              min_iterations: {{sla_min_iterations}} 
-              sigmas: {{sla_sigmas}}
     -
       title: Stress phase
       workloads:
@@ -134,7 +130,3 @@
             max_seconds_per_iteration: {{sla_max_seconds}}
             failure_rate:
               max: {{sla_max_failure_rate}}
-            outliers:
-              max: {{sla_max_failure}}
-              min_iterations: {{sla_min_iterations}} 
-              sigmas: {{sla_sigmas}}
