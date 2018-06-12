@@ -50,8 +50,6 @@ class OvnNorthbound(ovn.OvnScenario):
     def create_lport_acl_addrset(self, lswitch, lport_create_args, port_bind_args,
                                  ip_start_index = 0, addr_set_index = 0,
                                  create_addr_set = True, create_acls = True):
-        iteration = self.context["iteration"]
-
         lports = self._create_lports(lswitch, lport_create_args,
                                      lport_ip_shift = ip_start_index)
 
