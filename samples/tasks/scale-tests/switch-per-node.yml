@@ -85,9 +85,8 @@
               wait_sync: {{wait_sync}}
               wait_up: {{wait_up}}
           runner:
-            type: "constant"
+            type: "serial"
             times: {{logical_ports}}
-            concurrency: {{concurrency}}
           context:
             datapath:
               router_create_args:
@@ -118,9 +117,8 @@
               wait_sync: {{wait_sync}}
               wait_up: {{wait_up}}
           runner:
-            type: "constant"
+            type: "serial"
             times: {{stress_runs}}
-            concurrency: {{concurrency}}
           context:
             ovn_nb: {}
             ovn_multihost:
