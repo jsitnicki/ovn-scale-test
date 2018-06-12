@@ -81,6 +81,7 @@
           args:
             lport_create_args:
               batch: 1
+              port_security: False
             port_bind_args:
               wait_sync: {{wait_sync}}
               wait_up: {{wait_up}}
