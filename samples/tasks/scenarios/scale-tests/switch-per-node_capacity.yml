@@ -1,0 +1,110 @@
+{% set controller           = controller            or  {'node': 'ovn-controller-node', 'cidr': '172.16.0.1/16', 'net_dev': 'em1'}  %}
+{% set farms                = farms                 or [{'node': 'ovn-farm-node-0',     'cidr': '172.16.1.1/16', 'net_dev': 'em1'}] %}
+{% set network_start_cidr   = network_start_cidr    or "10.0.0.0/8" %}
+{% set phy_nate_name        = phy_nate_name %}
+{% set sandboxes_per_farm   = sandboxes_per_farm    or 1 %}
+{% set logical_ports        = logical_ports         or 100 %}
+{% set stress_runs          = stress_runs           or 40 %}
+{% set naddress_set         = naddress_set          or 50 %}
+{% set prefixlen            = prefixlen             or 8 %}
+{% set switches_per_router  = switches_per_router  or 1 %}
+{% set concurrency          = concurrency           or 1 %}
+{% set sla_max_seconds      = sla_max_seconds or 5 %}
+{% set sla_max_failure      = sla_max_failure or 0 %}
+{% set sla_max_failure_rate = sla_max_failure_rate or 0 %}
+{% set sla_sigmas           = sla_sigmas or 3 %}
+{% set sla_min_iterations   = sla_min_iterations or 0 %}
+{% set wait_sync            = wait_sync or 'sb' %}
+{% set wait_up              = wait_up or True %}
+
+---
+  version: 2
+  title: Create and bind ports using Rally runner for repeats
+  subtasks:
+{% for farm in farms %}
+    -
+      title: Delete sandboxes on {{farm['node']}}
+      workloads:
+        -
+          name: OvnSandbox.delete_sandbox
+          args:
+            # All sandboxes on all farms
+            sandbox_delete_args:
+              farm: {{farm['node']}}
+              graceful: false
+          runner:
+            type: "serial"
+            times: 1
+          context:
+            ovn_multihost:
+              controller: {{controller['node']}}
+{% endfor %}
+    -
+      title: (Re)create controller sandbox
+      workloads:
+        -
+          name: OvnSandbox.create_controller
+          args:
+            controller_create_args:
+              controller_cidr: {{controller['cidr']}}
+              net_dev: {{controller['net_dev']}}
+          runner:
+            type: "serial"
+            times: 1
+          context:
+            ovn_multihost:
+              controller: {{controller['node']}}
+{% for farm in farms %}
+    -
+      title: Create {{sandboxes_per_farm}} sandboxes on {{farm['node']}}
+      workloads:
+        -
+          name: OvnSandbox.create_sandbox
+          args:
+            sandbox_create_args:
+              farm: {{farm['node']}}
+              amount: {{sandboxes_per_farm}}
+              batch: {{sandboxes_per_farm}}
+              start_cidr: {{farm['cidr']}}
+              net_dev: {{farm['net_dev']}}
+          runner:
+            type: "serial"
+            times: 1
+          context:
+            ovn_multihost:
+              controller: {{controller['node']}}
+{% endfor %}
+    -
+      title: Set up phase
+      workloads:
+        -
+          name: OvnNorthbound.create_routed_lport
+          args:
+            lport_create_args:
+              batch: 1
+            port_bind_args:
+              wait_sync: {{wait_sync}}
+              wait_up: {{wait_up}}
+          runner:
+            type: "constant"
+            times: {{logical_ports}}
+            concurrency: {{concurrency}}
+          context:
+            datapath:
+              router_create_args:
+                amount: 1
+              lswitch_create_args:
+                amount: {{switches_per_router}}
+                start_cidr: {{network_start_cidr}}
+              networks_per_router: {{switches_per_router}}
+            ovn_multihost:
+              controller: {{controller['node']}}
+            sandbox: {}
+          sla:
+            max_seconds_per_iteration: {{sla_max_seconds}}
+            failure_rate:
+              max: {{sla_max_failure_rate}}
+            outliers:
+              max: {{sla_max_failure}}
+              min_iterations: {{sla_min_iterations}} 
+              sigmas: {{sla_sigmas}}
