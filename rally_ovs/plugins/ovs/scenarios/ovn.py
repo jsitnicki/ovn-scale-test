@@ -60,8 +60,7 @@ class OvnScenario(ovnclients.OvnClientMixin, scenario.OvsScenario):
         pass
 
     @atomic.action_timer("ovn.create_lport")
-    def _create_lports(self, lswitch, lport_create_args = [], lport_amount=1,
-                       lport_ip_shift = 1):
+    def _create_lports(self, lswitch, lport_create_args = [], lport_amount=1, lport_ip_shift = 0):
         LOG.info("create %d lports on lswitch %s" % \
                             (lport_amount, lswitch["name"]))
 
@@ -95,11 +94,14 @@ class OvnScenario(ovnclients.OvnClientMixin, scenario.OvsScenario):
         flush_count = batch
         lports = []
         for i in range(lport_amount):
-            name = self.generate_random_name()
-            lport = ovn_nbctl.lswitch_port_add(lswitch["name"], name)
-
             ip = str(ip_addrs.next()) if ip_addrs else ""
+            if len(ip):
+                name = "lport_%s" % ip
+            else:
+                name = self.generate_random_name()
             mac = utils.get_random_mac(base_mac)
+
+            lport = ovn_nbctl.lswitch_port_add(lswitch["name"], name)
 
             ovn_nbctl.lport_set_addresses(name, [mac, ip])
             ovn_nbctl.lport_set_port_security(name, mac)
@@ -140,7 +142,7 @@ class OvnScenario(ovnclients.OvnClientMixin, scenario.OvsScenario):
 
 
 
-    @atomic.action_timer("ovn.create_acl")
+    @atomic.optional_action_timer("ovn.create_acl")
     def _create_acl(self, lswitch, lports, acl_create_args, acls_per_port):
         sw = lswitch["name"]
         LOG.info("create %d ACLs on lswitch %s" % (acls_per_port, sw))
@@ -192,15 +194,19 @@ class OvnScenario(ovnclients.OvnClientMixin, scenario.OvsScenario):
 
     @atomic.action_timer("ovn.delete_acl")
     def _delete_acl(self, lswitches):
-        LOG.info("delete ACLs")
-
         ovn_nbctl = self.controller_client("ovn-nbctl")
         ovn_nbctl.set_sandbox("controller-sandbox")
         ovn_nbctl.enable_batch_mode(True)
         for lswitch in lswitches:
-            LOG.info("delete ACLs on lswitch %s" % lswitch["name"])
-            ovn_nbctl.acl_del(lswitch["name"])
+            self._delete_single_acl(lswitch)
+        ovn_nbctl.flush()
 
+    def _delete_single_acl(self, lswitch, direction=None,
+                           match=None):
+        ovn_nbctl = self.controller_client("ovn-nbctl")
+        ovn_nbctl.set_sandbox("controller-sandbox")
+        LOG.info("delete ACLs on lswitch %s" % lswitch["name"])
+        ovn_nbctl.acl_del(lswitch["name"], direction, match)
         ovn_nbctl.flush()
 
 
@@ -249,7 +255,10 @@ class OvnScenario(ovnclients.OvnClientMixin, scenario.OvsScenario):
 
         return lswitches
 
-    def _bind_ports_and_wait(self, lports, sandboxes, port_bind_args):
+
+
+    @atomic.action_timer("ovn_network.bind_port")
+    def _bind_ports(self, lports, sandboxes, port_bind_args):
         port_bind_args = port_bind_args or {}
         wait_up = port_bind_args.get("wait_up", False)
         # "wait_sync" takes effect only if wait_up is True.
@@ -260,17 +269,12 @@ class OvnScenario(ovnclients.OvnClientMixin, scenario.OvsScenario):
                 "Unknown value for wait_sync: %s. "
                 "Only 'hv', 'sb' and 'none' are allowed.") % wait_sync)
 
-        LOG.info("Bind lports method: %s" % self.install_method)
-
-        self._bind_ports(lports, sandboxes, port_bind_args)
-        if wait_up:
-            self._wait_up_port(lports, wait_sync)
-
-    @atomic.action_timer("ovn_network.bind_port")
-    def _bind_ports(self, lports, sandboxes, port_bind_args):
         sandbox_num = len(sandboxes)
         lport_num = len(lports)
         lport_per_sandbox = (lport_num + sandbox_num - 1) / sandbox_num
+
+        LOG.info("Bind lports method: %s" % self.install_method)
+        install_method = self.install_method
 
         if (len(lports) < len(sandboxes)):
             for lport in lports:
@@ -279,7 +283,7 @@ class OvnScenario(ovnclients.OvnClientMixin, scenario.OvsScenario):
                 sandbox = sandbox_data['name']
                 ovs_vsctl = self.farm_clients(farm, "ovs-vsctl")
 
-                ovs_vsctl.set_sandbox(sandbox, self.install_method)
+                ovs_vsctl.set_sandbox(sandbox, install_method)
                 ovs_vsctl.enable_batch_mode()
                 port_name = lport["name"]
                 LOG.info("bind %s to %s on %s" % (port_name, sandbox, farm))
@@ -299,7 +303,7 @@ class OvnScenario(ovnclients.OvnClientMixin, scenario.OvsScenario):
                 sandbox = sandboxes[j]["name"]
                 farm = sandboxes[j]["farm"]
                 ovs_vsctl = self.farm_clients(farm, "ovs-vsctl")
-                ovs_vsctl.set_sandbox(sandbox, self.install_method)
+                ovs_vsctl.set_sandbox(sandbox, install_method)
                 ovs_vsctl.enable_batch_mode()
                 for lport in lport_slice:
                     port_name = lport["name"]
@@ -314,11 +318,15 @@ class OvnScenario(ovnclients.OvnClientMixin, scenario.OvsScenario):
                 ovs_vsctl.flush()
                 j += 1
 
+        if wait_up:
+            self._wait_up_port(lports, wait_sync, install_method)
+
+
     @atomic.action_timer("ovn_network.wait_port_up")
-    def _wait_up_port(self, lports, wait_sync):
+    def _wait_up_port(self, lports, wait_sync, install_method):
         LOG.info("wait port up. sync: %s" % wait_sync)
         ovn_nbctl = self.controller_client("ovn-nbctl")
-        ovn_nbctl.set_sandbox("controller-sandbox", self.install_method)
+        ovn_nbctl.set_sandbox("controller-sandbox", install_method)
         ovn_nbctl.enable_batch_mode(True)
 
         for lport in lports:
