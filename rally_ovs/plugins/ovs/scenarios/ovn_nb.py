@@ -47,9 +47,19 @@ class OvnNorthbound(ovn.OvnScenario):
         self._create_acl(lswitch, lports, acl_create_args, 1,
                          atomic_action=False)
 
+    def _warm_up_nbctl(self):
+        # Perform a no-op with 'ovn-nbctl'. That prevents the the extra overhead
+        # we see with the first run of 'ovn-nbctl'. It is unclear though where
+        # the overhead comes from. Doing a no-op with just 'ssh' does not help.
+        ovn_nbctl = self.controller_client("ovn-nbctl")
+        ovn_nbctl.set_sandbox("controller-sandbox", self.install_method)
+        ovn_nbctl.run("comment")
+
     def create_lport_acl_addrset(self, lswitch, lport_create_args, port_bind_args,
                                  ip_start_index = 0, addr_set_index = 0,
                                  create_addr_set = True, create_acls = True):
+        self._warm_up_nbctl()
+
         lports = self._create_lports(lswitch, lport_create_args,
                                      lport_ip_shift = ip_start_index)
 
@@ -98,6 +108,8 @@ class OvnNorthbound(ovn.OvnScenario):
     @scenario.configure()
     def add_remove_routed_lport(self, test_args, lport_create_args = None,
                                 port_bind_args = None, create_acls = True):
+        self._warm_up_nbctl()
+
         naddress_set = test_args.get("naddress", 10)
         prefix_len = test_args.get("prefixlen", 24)
 
