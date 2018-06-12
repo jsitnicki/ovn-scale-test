@@ -1,7 +1,6 @@
 {% set controller           = controller            or  {'node': 'ovn-controller-node', 'cidr': '172.16.0.1/16', 'net_dev': 'em1'}  %}
 {% set farms                = farms                 or [{'node': 'ovn-farm-node-0',     'cidr': '172.16.1.1/16', 'net_dev': 'em1'}] %}
 {% set network_start_cidr   = network_start_cidr    or "10.0.0.0/8" %}
-{% set phy_nate_name        = phy_nate_name %}
 {% set sandboxes_per_farm   = sandboxes_per_farm    or 1 %}
 {% set logical_ports        = logical_ports         or 100 %}
 {% set stress_runs          = stress_runs           or 40 %}
